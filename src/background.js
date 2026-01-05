@@ -121,10 +121,10 @@ app.on('ready', () => {
     event.reply('get-printers', printers);
   });
   setAppTray();
-  if (process.env.NODE_ENV === 'production') {
-    // 启动Java进程
-    spawn(path.join(__static, './jre', 'jre1.8.0_251', 'bin', 'java'), ['-Xmx1024m', '-Xms1024m', '-jar', path.join(__static, './jarlib', 'label-print-jiuxing-middle.jar')]);
-  }
+  // if (process.env.NODE_ENV === 'production') {
+  //   // 启动Java进程
+  //   spawn(path.join(__static, './jre', 'jre1.8.0_251', 'bin', 'java'), ['-Xmx1024m', '-Xms1024m', '-jar', path.join(__static, './jarlib', 'label-print-jiuxing-middle.jar')]);
+  // }
 
   // 开发者工具
   globalShortcut.register('CommandOrControl+L', () => {
@@ -160,26 +160,68 @@ app.on('ready', () => {
   server.listen(2000, () => {
     console.log('Server listening on port 2000');
   });
+
+  // 创建 Socket 客户端连接
+  const client = new net.Socket();
+  const HOST = '192.168.10.253';
+  const PORT = 5700;
+
+  client.on('error', (err) => {
+    console.error(`Client connection error: ${err.message}`);
+    // 失败了也不要影响其他流程
+  });
+
+  client.on('close', () => {
+    console.log('Client connection closed');
+    mainWindow.webContents.send('dealSocketStatus', false);
+  });
+
+  client.connect(PORT, HOST, () => {
+    console.log(`Connected to server: ${HOST}:${PORT}`);
+    mainWindow.webContents.send('dealSocketStatus', true);
+  });
+
+  client.on('data', (data) => {
+    try {
+      const dataStr = data.toString('ascii').replace(/[^\d,]/g, '').trim();
+      const firstPart = dataStr.split(',')[0].trim();
+      
+      // 进行重量转换 0008522是8.522Kg
+      const weightNum = parseInt(firstPart, 10);
+      if (!isNaN(weightNum)) {
+        // 转换为保留3位小数的字符串
+        const weightVal = (weightNum / 1000).toFixed(3);
+        const jsonToSend = { weight: weightVal };
+        
+        if (mainWindow && !mainWindow.isDestroyed()) {
+           mainWindow.webContents.send('getWeightJson', jsonToSend);
+           mainWindow.webContents.send('dealSocketStatus', true);
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing data:', e);
+    }
+  });
   ipcMain.handle('read-config-file', async (event, arg) => {
-    if(!fs.existsSync("D://label_temp_data/config/config.json")){
-      fs.writeFile("D://label_temp_data/config/config.json", JSON.stringify({machineName:""}), function(err) {});
+    if(!fs.existsSync("D://label_temp_data_single/config/config.json")){
+      fs.writeFile("D://label_temp_data_single/config/config.json", JSON.stringify({machineName:""}), function(err) {});
       return {};
     };
-    return await fs.readFileSync("D://label_temp_data/config/config.json", 'utf8');
+    return await fs.readFileSync("D://label_temp_data_single/config/config.json", 'utf8');
   })
   
   ipcMain.handle('update-config-file', async (event, arg) => {
-    await fs.writeFileSync("D://label_temp_data/config/config.json", JSON.stringify(arg))
+    await fs.writeFileSync("D://label_temp_data_single/config/config.json", JSON.stringify(arg))
   })
   // 定义自定义事件
   ipcMain.on('writeLogToLocal', (event, arg) => {
-    fs.appendFile("D://label_temp_data/log/" + ((new Date()).toLocaleDateString() + ".txt").replaceAll('/','-'), arg + '\n', function(err) {});
+    fs.appendFile("D://label_temp_data_single/log/" + ((new Date()).toLocaleDateString() + ".txt").replaceAll('/','-'), arg + '\n', function(err) {});
   })
 });
 
 function createFile(fileNameVal) {
   const sourcePath = path.join(__static, './report', fileNameVal);// 要复制的文件的路径=
-  const destinationPath = 'D://label_temp_data/report'; // 目标文件夹的路径
+  const destinationPath = 'D://label_temp_data_single/report'; // 目标文件夹的路径
 
   // 检查源文件是否存在
   if (!fs.existsSync(sourcePath)) {
@@ -204,7 +246,7 @@ function createFile(fileNameVal) {
     }
   }
 
-  const destinationLogPath = 'D://label_temp_data/log'; // 目标文件夹的路径
+  const destinationLogPath = 'D://label_temp_data_single/log'; // 目标文件夹的路径
 
   // 创建日志的文件夹
   if (!fs.existsSync(destinationLogPath)) {
@@ -217,7 +259,7 @@ function createFile(fileNameVal) {
     }
   }
 
-  const destinationSetPath = 'D://label_temp_data/config'; // 目标文件夹的路径
+  const destinationSetPath = 'D://label_temp_data_single/config'; // 目标文件夹的路径
 
   // 创建日志的文件夹
   if (!fs.existsSync(destinationSetPath)) {
@@ -263,7 +305,7 @@ const setAppTray = () => {
   const contextMenu = Menu.buildFromTemplate(trayMenuTemplate)
 
   // 设置此托盘图标的悬停提示内容
-  appTray.setToolTip('九星标签打印系统')
+  appTray.setToolTip('九星标签打印系统-单机')
 
   // 设置此图标的上下文菜单
   appTray.setContextMenu(contextMenu)

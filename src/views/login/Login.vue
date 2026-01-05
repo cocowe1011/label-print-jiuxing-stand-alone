@@ -2,7 +2,7 @@
   <div class="login">
     <div class="login-right">
       <div class="login-right-top">
-        <div class="login-right-top-left" style="color: white;font-size: 16px;">九星标签打印系统v1.0</div>
+        <div class="login-right-top-left" style="color: white;font-size: 16px;">九星标签打印系统-单机v1.0</div>
         <div class="login-right-top-min" style="z-index: 12;" @click="minWindow"><i class="el-icon-minus" style="font-size:18px;font-weight:600;color:white;"></i></div>
         <div class="login-right-top-close" style="z-index: 12;" @click="closewindow"><i class="el-icon-close" style="font-size:18px;font-weight:600;color:white;"></i></div>
       </div>

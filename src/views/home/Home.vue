@@ -211,7 +211,7 @@ export default {
       runStatus: false,
       printers: [],
       printerName: '',
-      grfPath: 'D://label_temp_data/report/labelPrint.grf',
+      grfPath: 'D://label_temp_data_single/report/labelPrint.grf',
       imageSrc: '',
       machineName: '',
       machineTask: null,
@@ -425,7 +425,7 @@ export default {
       }, 500);
     },
     updateImgSrc() {
-      this.imageSrc = 'D://label_temp_data/report/temp/temp.png?' + new Date().getTime();
+      this.imageSrc = 'D://label_temp_data_single/report/temp/temp.png?' + new Date().getTime();
     },
     testPrint() {
       const printObj = {"Master":[]};
