@@ -586,7 +586,7 @@ export default {
         showOptionDlg: false,  //指定不显示导出选项对话框
         ImageType: 'png',
         DPI: 288,
-        filename: "d:\\label_temp_data\\report\\temp\\temp.png", //指定导出的文件路径与文件名
+        filename: "d:\\label_temp_data_single\\report\\temp\\temp.png", //指定导出的文件路径与文件名
         open: false  //指定导出后不自动打开文件
       };
       grwebapp.webapp_ws_ajax_run(args);
