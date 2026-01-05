@@ -5,7 +5,7 @@
         <div class="maskDiv-top-left">
           <img src="../../../build/icons/64x64.png" style="width:38px;height:38px;" />
           <div style="margin-left:10px;height:100%;">
-            <div class="maskDiv-top-left-top-title">标签打印系统</div>
+            <div class="maskDiv-top-left-top-title">标签打印系统-单机</div>
             <div class="maskDiv-top-left-top-title2">labelprint</div>
           </div>
         </div>

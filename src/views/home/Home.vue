@@ -8,7 +8,6 @@
           <span style="margin-left: 15px;">作业状态：<span :style="{color: machineTask === null ? 'red': 'green'}"><i class="el-icon-loading" v-if="machineTask !== null"></i>{{ machineTask === null ? '未作业': '作业中' }}</span></span>
           <span style="margin-left: 20px;">当前共打印： <span style="color: red">{{ printNum }}</span>份</span>
           <el-button style="margin-left: 15px;" type="primary" size="medium" @click="refresh">刷新</el-button>
-          <el-button style="margin-left: 15px;" type="primary" size="medium" @click="showPrintHistory">查看打印历史</el-button>
           <el-checkbox style="margin-left: 15px;" v-model="djMode" @change="changeDjMode">单机打印</el-checkbox>
           <el-button style="margin-left: 15px;" type="warning" plain size="medium" @click="openStandPop" v-show="djMode">单机打印</el-button>
           <el-button style="margin-left: 15px;" size="medium" @click="openReport(grfPath)" :loading="openBoxLoading" v-show="false">标签</el-button>
@@ -42,33 +41,45 @@
           </div>
         </div>
         <el-divider content-position="left">标签打印</el-divider>
-        <div class="button-content" style="display: flex;align-items: center;">
-          <el-button type="primary" icon="el-icon-switch-button" size="medium" :loading="runStatus" @click="runPrint">启动打印</el-button>
-          <el-button type="danger" icon="el-icon-close" size="medium" @click="stopPrint">停止</el-button>
-          <el-divider direction="vertical"></el-divider>
-          <el-switch
-            @change="changeIfPrintWeight"
-            v-model="ifPrintWeight"
-            active-text="不打体重"
-            inactive-text="打印体重">
-          </el-switch>
-          <el-divider direction="vertical"></el-divider>
-          <el-tooltip class="item" effect="dark" content="设置标签数据" placement="top-start">
-            <el-button size="medium" type="primary" icon="el-icon-edit" circle @click="showLableDataView"></el-button>
-          </el-tooltip>
-          <el-divider direction="vertical"></el-divider>
-          <span>打印机：</span>
-          <el-select v-model="printerName" @change="changePrinterName" placeholder="请选择" style="width: 300px;">
-            <el-option
-              v-for="(item, index) in printers"
-              :key="index"
-              :label="item.displayName"
-              :value="item.displayName">
-            </el-option>
-          </el-select>
-          <el-tooltip class="item" effect="dark" content="打印测试" placement="top-start">
-            <el-button type="primary" size="medium" icon="el-icon-printer" @click="testPrint" circle style="margin-left: 15px;"></el-button>
-          </el-tooltip>
+        <div class="button-content" style="display: flex;align-items: center;flex-wrap: wrap;height: auto;">
+          <div style="display: flex;align-items: center;width: 100%;margin-bottom: 10px;">
+            <span style="margin-right: 10px;">箱序号：</span>
+            <span style="margin-right: 5px;">起始</span>
+            <el-input-number v-model="iindexStart" :min="0" :max="99999" controls-position="right" size="small" style="width: 140px;"></el-input-number>
+            <span style="margin: 0 10px;">至</span>
+            <span style="margin-right: 5px;">结束</span>
+            <el-input-number v-model="iindexEnd" :min="0" :max="99999" controls-position="right" size="small" style="width: 140px;"></el-input-number>
+            <span style="margin-left: 15px;color: #909399;">当前编号：<span style="color: #409EFF;font-weight: bold;">{{ currentIindex }}</span></span>
+            <el-button type="text" size="small" @click="resetIindex" style="margin-left: 10px;">重置编号</el-button>
+          </div>
+          <div style="display: flex;align-items: center;width: 100%;">
+            <el-button type="primary" icon="el-icon-switch-button" size="medium" :loading="runStatus" @click="runPrint">启动打印</el-button>
+            <el-button type="danger" icon="el-icon-close" size="medium" @click="stopPrint">停止</el-button>
+            <el-divider direction="vertical"></el-divider>
+            <el-switch
+              @change="changeIfPrintWeight"
+              v-model="ifPrintWeight"
+              active-text="不打体重"
+              inactive-text="打印体重">
+            </el-switch>
+            <el-divider direction="vertical"></el-divider>
+            <el-tooltip class="item" effect="dark" content="设置标签数据" placement="top-start">
+              <el-button size="medium" type="primary" icon="el-icon-edit" circle @click="showLableDataView"></el-button>
+            </el-tooltip>
+            <el-divider direction="vertical"></el-divider>
+            <span>打印机：</span>
+            <el-select v-model="printerName" @change="changePrinterName" placeholder="请选择" style="width: 300px;">
+              <el-option
+                v-for="(item, index) in printers"
+                :key="index"
+                :label="item.displayName"
+                :value="item.displayName">
+              </el-option>
+            </el-select>
+            <el-tooltip class="item" effect="dark" content="打印测试" placement="top-start">
+              <el-button type="primary" size="medium" icon="el-icon-printer" @click="testPrint" circle style="margin-left: 15px;"></el-button>
+            </el-tooltip>
+          </div>
         </div>
         <el-divider content-position="left">标签预览</el-divider>
         <div style="width: 100%; height: calc(100% - 158px);display: flex; align-items: center; justify-content: center;" v-loading="labelLoading">
@@ -77,7 +88,10 @@
         </div>
       </div>
       <div class="home-right">
-        <el-divider content-position="left">当前订单信息</el-divider>
+        <el-divider content-position="left">
+          当前订单信息
+          <el-button type="text" size="mini" icon="el-icon-setting" @click="showOrderInfoSetDialog" style="margin-left: 10px;">设置</el-button>
+        </el-divider>
         <div style="height: calc(100% - 8px);width:100%;overflow: auto;">
           <el-descriptions style="margin-top:10px;" :column="1" size="medium" border>
             <el-descriptions-item label="生产订单ID">{{ nowOrderObj.idScproduct === undefined ? '未查询到可打印信息': nowOrderObj.idScproduct }}</el-descriptions-item>
@@ -100,14 +114,75 @@
       </div>
     </div>
     <el-dialog
-      title="查看打印历史"
-      :visible.sync="dialogVisible"
-      width="1200px"
-      :before-close="handleClose"
+      title="设置订单信息"
+      :visible.sync="orderInfoSetDialog"
+      width="800px"
+      :before-close="handleCloseOrderInfoSetDialog"
       append-to-body
       destroy-on-close
       >
-      <ViewPrintLogList :machineName="machineName" v-if="dialogVisible" @rePrint="rePrint" ref="viewPrintLogListRef"/>
+      <div style="height:600px;width:100%;padding: 10px 20px;box-sizing: border-box;">
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">生产订单ID：</div>
+          <el-input v-model="orderSetData.idScproduct" placeholder="请输入内容" style="width: 240px;margin-left: 8px;"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">生产批号：</div>
+          <el-input v-model="orderSetData.ccodeScproduct" placeholder="请输入内容" style="width: 240px;margin-left: 8px;"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">产品编号：</div>
+          <el-input v-model="orderSetData.ccodeScaproduct" placeholder="请输入内容" style="width: 240px;margin-left: 8px;"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">产品名称：</div>
+          <el-input v-model="orderSetData.cnameScaproduct" placeholder="请输入内容" style="width: 240px;margin-left: 8px;"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">客户名称：</div>
+          <el-input v-model="orderSetData.customer" placeholder="请输入内容" style="width: 240px;margin-left: 8px;"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">客户品名：</div>
+          <el-input v-model="orderSetData.customerName" placeholder="请输入内容" style="width: 240px;margin-left: 8px;"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">委印单号：</div>
+          <el-input v-model="orderSetData.orderNumber" placeholder="请输入内容" style="width: 240px;margin-left: 8px;"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">客户批号：</div>
+          <el-input v-model="orderSetData.customerNumber" placeholder="请输入内容" style="width: 240px;margin-left: 8px;"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">客户料号：</div>
+          <el-input v-model="orderSetData.customerMaterialNumber" placeholder="请输入内容" style="width: 240px;margin-left: 8px;"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">外箱长度：</div>
+          <el-input v-model="orderSetData.length" placeholder="请输入内容" style="width: 240px;margin-left: 8px;" type="number"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">外箱宽度：</div>
+          <el-input v-model="orderSetData.width" placeholder="请输入内容" style="width: 240px;margin-left: 8px;" type="number"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">外箱高度：</div>
+          <el-input v-model="orderSetData.height" placeholder="请输入内容" style="width: 240px;margin-left: 8px;" type="number"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">每箱包装数量：</div>
+          <el-input v-model="orderSetData.namount" placeholder="请输入内容" style="width: 240px;margin-left: 8px;" type="number"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">生产日期：</div>
+          <el-date-picker style="width: 240px;margin-left: 8px;" v-model="orderSetData.dstatuschange" type="date" :editable="false" placeholder="选择日期" clearable value-format="yyyy-MM-dd"></el-date-picker>
+        </div>
+        <div style="height: 60px;width: 100%;display: flex;align-items: center;justify-content: center;float: left;margin-top: 10px;">
+          <el-button type="primary" size="medium" @click="saveOrderSetData">保存并应用</el-button>
+          <el-button type="danger" size="medium" style="margin-left: 15px;" @click="handleCloseOrderInfoSetDialog">关闭</el-button>
+        </div>
+      </div>
     </el-dialog>
     <el-dialog
       title="设置标签数据"
@@ -194,7 +269,6 @@
 import { Debugger, ipcRenderer } from 'electron'
 import grwebapp from '@/utils/grwebapp'
 import HttpUtil from '@/utils/HttpUtil'
-import ViewPrintLogList from './ViewPrintLogList.vue'
 import moment from 'moment'
 const { exec } = require('child_process');
 const os = require('os');
@@ -202,9 +276,7 @@ import { EventBus } from './eventBus';
 const remote = require('electron').remote
 export default {
   name: "Home",
-  components: {
-    ViewPrintLogList
-  },
+  components: {},
   props: {},
   data() {
     return {
@@ -218,7 +290,6 @@ export default {
       printNum: 0,
       configData: {},
       nowOrderObj: {}, // 当前展示的订单信息
-      dialogVisible: false,
       openBoxLoading: false,
       labelLoading: false,
       setLabelDataView: false,
@@ -246,10 +317,48 @@ export default {
       iversSetValue: '', // 版本号
       ddateSetValue: null, // 生产日期
       nweightSetValue: '', // 体重
-      isCanUpdate: false // 是否已经授权可以修改内容
+      isCanUpdate: false, // 是否已经授权可以修改内容
+      orderInfoSetDialog: false, // 订单信息设置对话框
+      orderSetData: { // 手动设置的订单信息
+        idScproduct: '',
+        ccodeScproduct: '',
+        ccodeScaproduct: '',
+        cnameScaproduct: '',
+        customer: '',
+        customerName: '',
+        orderNumber: '',
+        customerNumber: '',
+        customerMaterialNumber: '',
+        length: '',
+        width: '',
+        height: '',
+        namount: '',
+        dstatuschange: ''
+      },
+      iindexStart: 1, // 箱序号起始
+      iindexEnd: 100, // 箱序号结束
+      currentIindex: 1 // 当前箱序号
     };
   },
-  watch: {},
+  watch: {
+    iindexStart(newVal) {
+      if(newVal > this.iindexEnd) {
+        this.$message.warning('起始编号不能大于结束编号！');
+        this.iindexStart = this.iindexEnd;
+        return;
+      }
+      if(this.currentIindex < newVal) {
+        this.currentIindex = newVal;
+      }
+    },
+    iindexEnd(newVal) {
+      if(newVal < this.iindexStart) {
+        this.$message.warning('结束编号不能小于起始编号！');
+        this.iindexEnd = this.iindexStart;
+        return;
+      }
+    }
+  },
   computed: {},
   methods: {
     changeIfPrintWeight() {
@@ -334,44 +443,6 @@ export default {
     closeStandPop() {
       this.standPrintPopShow = false
     },
-    rePrint(obj) {
-      obj.iindex = obj.iindex.padStart(5, '0')
-      // 1、打印标签
-      const printObj = {"Master":[obj]};
-      var args = {
-        type: "print", //设置不同的属性可以执行不同的任务，如：preview print pdf xls csv txt rtf img grd
-        // type: "pdf",
-        report: grwebapp.urlAddRandomNo(this.grfPath),
-        //实际应用中，data应该为程序中通过各种途径获取到的数据，最后要将数据转换为报表需要的XML或JSON格式的字符串数据
-        data: printObj,
-        PrinterName: this.printerName, //指定要输出的打印机名称
-        showOptionDlg: false,
-      };
-      grwebapp.webapp_ws_ajax_run(args);
-      this.$message.success('打印成功！')
-      // 2、回更补打印次数
-      const param = {
-        id: obj.id,
-        reprintingTime: obj.reprintingTime + 1
-      }
-      HttpUtil.post('/order/update', param).then((res)=> {
-        if(res.data && res.data > 0) {
-          // 3、打印成功重新查询订单参数
-          this.$refs.viewPrintLogListRef.getOrderListSearchParam();
-        } else {
-          this.$message.error('未成功更新补打印次数！请重试！')
-        }
-      }).catch((err)=> {
-        this.$message.error('未成功更新补打印次数！请重试！')
-      });
-      
-    },
-    showPrintHistory() {
-      this.dialogVisible = true
-    },
-    handleClose() {
-      this.dialogVisible = false
-    },
     async showLableDataView() {
       // 查询本地配置
       this.configData = JSON.parse(await ipcRenderer.invoke('read-config-file'))
@@ -415,24 +486,43 @@ export default {
       });
     },
     async refresh(){
-      // 重新查询订单信息
+      // 重新应用手动设置的订单信息
       this.labelLoading = true
       await this.getMachineTask();
-      // 查询当前打印订单信息
-      await this.getPrintInfo();
+      // 应用当前设置的订单信息
+      this.applyOrderInfo();
       setTimeout(() => {
         this.labelLoading = false
       }, 500);
+    },
+    showOrderInfoSetDialog() {
+      this.orderInfoSetDialog = true;
+    },
+    handleCloseOrderInfoSetDialog() {
+      this.orderInfoSetDialog = false;
+    },
+    async saveOrderSetData() {
+      // 保存到单独的订单信息文件（方式和config.json保持一致）
+      await ipcRenderer.invoke('save-order-data', this.orderSetData);
+      this.$message.success('订单信息已保存！');
+      this.orderInfoSetDialog = false;
+      // 应用新的订单信息
+      this.applyOrderInfo();
     },
     updateImgSrc() {
       this.imageSrc = 'D://label_temp_data_single/report/temp/temp.png?' + new Date().getTime();
     },
     testPrint() {
+      if(Object.keys(this.nowOrderObj).length === 0) {
+        this.$message.error('请先设置订单信息！');
+        return;
+      }
       const printObj = {"Master":[]};
       const tempObj = JSON.parse(JSON.stringify(this.nowOrderObj));
       tempObj.iindex = '0'
       tempObj.nweight = '0'
-      tempObj.qrCode = tempObj.qrCode + ',' + tempObj.ccodeScproduct + ',' + tempObj.dstatuschange + ',0,' + this.machineTask.machine + ',0Kg'
+      const machine = this.machineTask ? this.machineTask.machine : this.machineName;
+      tempObj.qrCode = tempObj.qrCode + ',' + tempObj.ccodeScproduct + ',' + tempObj.dstatuschange + ',0,' + machine + ',0Kg'
       printObj.Master = [tempObj];
       var args = {
         type: "print", //设置不同的属性可以执行不同的任务，如：preview print pdf xls csv txt rtf img grd
@@ -444,6 +534,7 @@ export default {
         showOptionDlg: false,
       };
       grwebapp.webapp_ws_ajax_run(args);
+      this.$message.success('测试打印已发送！');
     },
     async printLable(weight) {
       this.createLog(moment().format('YYYY-MM-DD HH:mm:ss') + ' 开始打印订单，体重：'+weight+'当前订单信息：'+JSON.stringify(this.nowOrderObj));
@@ -452,9 +543,10 @@ export default {
         weight = this.nweightSetValue
       }
       const printObj = {"Master":[]};
-      this.nowOrderObj.iindex = this.nowOrderObj.iindex.padStart(5, '0')
+      this.nowOrderObj.iindex = String(this.nowOrderObj.iindex).padStart(5, '0')
       this.nowOrderObj.nweight = weight
-      this.nowOrderObj.qrCode = this.nowOrderObj.qrCode + ',' + this.nowOrderObj.ccodeScproduct + ',' + this.nowOrderObj.dstatuschange + ',' + this.nowOrderObj.iindex + ',' + this.machineTask.machine + ',' + weight + 'Kg'
+      const machine = this.machineTask ? this.machineTask.machine : this.machineName;
+      this.nowOrderObj.qrCode = this.nowOrderObj.qrCode + ',' + this.nowOrderObj.ccodeScproduct + ',' + this.nowOrderObj.dstatuschange + ',' + this.nowOrderObj.iindex + ',' + machine + ',' + weight + 'Kg'
       printObj.Master = [this.nowOrderObj];
       var args = {
         type: "print", //设置不同的属性可以执行不同的任务，如：preview print pdf xls csv txt rtf img grd
@@ -467,30 +559,18 @@ export default {
       };
       grwebapp.webapp_ws_ajax_run(args);
       this.printNum++;
-      // 更新这个订单的一些状态，然后反馈日志信息到中间表
       // 恢复体重,处理空串和0
       if(this.nowOrderObj.nweight === '') {
         this.nowOrderObj.nweight = 0
       }
-      await this.dealAfterPrint(this.nowOrderObj)
-      // 马上查询下一个订单
-      this.getPrintInfo();
-    },
-    async dealAfterPrint(param) {
-      this.createLog(moment().format('YYYY-MM-DD HH:mm:ss') + ' 更新打印订单信息，入参：'+JSON.stringify(param));
-      await HttpUtil.post('/order/dealAfterPrint', param).then((res)=> {
-        // 输出打印成功的日志
-        if(res.data>0) {
-          this.$message.success('已插入日志记录')
-        } else {
-          this.$message.error('日志插入失败！即将重新打印')
-        }
-        // 失败了给予失败提示
-      }).catch((err)=> {
-        // 失败了给予失败提示
-        this.$message.error('日志插入失败！即将重新打印')
-        this.createLog(moment().format('YYYY-MM-DD HH:mm:ss') + ' 更新打印订单信息，失败：'+ err);
-      });
+      // 更新箱序号（仅内存计算）
+      if(this.currentIindex < this.iindexEnd) {
+        this.currentIindex++;
+      } else {
+        this.$message.warning('已达到结束编号！');
+      }
+      // 重新应用订单信息以便下次打印
+      this.applyOrderInfo();
     },
     showLabelImg(param) {
       this.createLog(moment().format('YYYY-MM-DD HH:mm:ss') + ' 生成展示pdf，入参：' + JSON.stringify(param));
@@ -516,6 +596,10 @@ export default {
         this.$message.error('请选择机台！')
         return false;
       }
+      if(Object.keys(this.nowOrderObj).length === 0) {
+        this.$message.error('请先设置订单信息！')
+        return false;
+      }
       this.runStatus = true
       this.$message.success('已启动！')
     },
@@ -534,6 +618,18 @@ export default {
       const obj = JSON.parse(await ipcRenderer.invoke('read-config-file'))
       obj.printerName = value;
       this.updateData(obj)
+    },
+    resetIindex() {
+      this.$confirm('确定要将当前编号重置为起始编号吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.currentIindex = this.iindexStart;
+        this.$message.success('编号已重置！');
+        // 重新应用订单信息
+        this.applyOrderInfo();
+      }).catch(() => {});
     },
     async getMachineTask() {
       this.machineTask = null
@@ -555,6 +651,12 @@ export default {
         this.inspectionSetValue = this.configData.inspectionSetValue
         this.iboxtagSetValue = this.configData.iboxtagSetValue
         this.cclassSetValue = this.configData.cclassSetValue
+        // 从单独的文件加载订单信息（方式和config.json保持一致）
+        const orderDataStr = await ipcRenderer.invoke('read-order-data');
+        const orderData = JSON.parse(orderDataStr);
+        if(orderData && Object.keys(orderData).length > 0) {
+          this.orderSetData = orderData;
+        }
       } catch (error) {
         console.error('Error:', error)
       }
@@ -573,82 +675,82 @@ export default {
         console.error('Error:', error)
       }
     },
-    async getPrintInfo() {
-      if (this.machineTask != null) {
-        this.nowOrderObj = {}
-        // 查询按照箱编号正序排序的第一个订单信息
-        const param = {"machine": this.machineTask.machine, "idScproduct": this.machineTask.idScproduct}
-        this.createLog(moment().format('YYYY-MM-DD HH:mm:ss') + ' 进入查询订单信息方法，入参：'+JSON.stringify(param));
-        // 查询信息时将订单状态给更新，防止其他机台操作数据，保证数据原子性
-        HttpUtil.post('/order/getOrderBoxInfo', param).then((res)=> {
-          if(res.data) {
-            this.nowOrderObj = res.data
-            this.nowOrderObj.machine = this.machineTask.machine
-            this.nowOrderObj.inspection = this.inspectionSetValue
-            this.nowOrderObj.qrCode = (this.machineTask.machine === 'M-4#CZHJ20230630' ? '03' : (this.machineTask.machine === 'M-5#ZHJ' ? '02' : '01')) + ',' + this.nowOrderObj.length + 'x' + this.nowOrderObj.width + 'x' + this.nowOrderObj.height
-            this.nowOrderObj.nweight = this.nowOrderObj.nweight === 0 ? '': this.nowOrderObj.nweight
-            this.nowOrderObj.iboxtag = this.iboxtagSetValue
-            this.nowOrderObj.cclass = this.cclassSetValue
-            this.nowOrderObj.iindex = this.nowOrderObj.iindex.padStart(5, '0')
-            // 判断用户有没有设置备注和数量，如果有，替换为用户自己设置的数量和备注
-            if(this.cremarkSetValue !== '') {
-              this.nowOrderObj.cremark = this.cremarkSetValue
-            }
-            if(this.namountSetValue !== '') {
-              this.nowOrderObj.namount = this.namountSetValue
-            }
-            // 客户名称
-            if(this.customerSetValue !== '') {
-              this.nowOrderObj.customer = this.customerSetValue
-            }
-            // 客户品名
-            if(this.customerNameSetValue !== '') {
-              this.nowOrderObj.customerName = this.customerNameSetValue
-            }
-            // 委印单号
-            if(this.orderNumberSetValue !== '') {
-              this.nowOrderObj.orderNumber = this.orderNumberSetValue
-            }
-            // 客户批号
-            if(this.customerNumberSetValue !== '') {
-              this.nowOrderObj.customerNumber = this.customerNumberSetValue
-            }
-            // 客户料号
-            if(this.customerMaterialNumberSetValue !== '') {
-              this.nowOrderObj.customerMaterialNumber = this.customerMaterialNumberSetValue
-            }
-            // 生产批号
-            if(this.ccodeScproductSetValue !== '') {
-              this.nowOrderObj.ccodeScproduct = this.ccodeScproductSetValue
-            }
-            // 产品编号
-            if(this.ccodeScaproductSetValue !== '') {
-              this.nowOrderObj.ccodeScaproduct = this.ccodeScaproductSetValue
-            }
-            // 版本号
-            if(this.iversSetValue !== '') {
-              this.nowOrderObj.ivers = this.iversSetValue
-            }
-            // nweightSetValue 体重
-            if(this.nweightSetValue !== '') {
-              this.nowOrderObj.nweight = this.nweightSetValue
-            }
-            // 生产日期
-            if(this.ddateSetValue !== null) {
-              this.nowOrderObj.dstatuschange = moment(this.ddateSetValue).format('YYYY-MM-DD')
-            }
-          } else {
-            // 没有订单可打印了，展示空白即可
-            this.nowOrderObj = {}
-          }
-          this.createLog(moment().format('YYYY-MM-DD HH:mm:ss') + ' 查询完毕，出参：'+JSON.stringify(this.nowOrderObj));
-          this.showLabelImg(this.nowOrderObj);
-        }).catch((err)=> {
-          this.$message.error('查询订单信息出错！稍后自动重试！');
-          this.createLog(moment().format('YYYY-MM-DD HH:mm:ss') + ' 查询订单信息出错！稍后自动重试！');
-        });
+    applyOrderInfo() {
+      // 使用手动设置的订单信息
+      if (Object.keys(this.orderSetData).length > 0) {
+        this.nowOrderObj = JSON.parse(JSON.stringify(this.orderSetData));
+        
+        // 应用其他设置的参数
+        this.nowOrderObj.machine = this.machineTask ? this.machineTask.machine : this.machineName;
+        this.nowOrderObj.inspection = this.inspectionSetValue;
+        
+        // 生成二维码
+        const machineCode = this.machineTask && this.machineTask.machine === 'M-4#CZHJ20230630' ? '03' : 
+                           (this.machineTask && this.machineTask.machine === 'M-5#ZHJ' ? '02' : '01');
+        this.nowOrderObj.qrCode = machineCode + ',' + this.nowOrderObj.length + 'x' + this.nowOrderObj.width + 'x' + this.nowOrderObj.height;
+        
+        // 应用标签设置的参数
+        this.nowOrderObj.iboxtag = this.iboxtagSetValue;
+        this.nowOrderObj.cclass = this.cclassSetValue;
+        
+        // 设置当前箱序号
+        this.nowOrderObj.iindex = String(this.currentIindex).padStart(5, '0');
+        
+        // 应用备注和数量
+        if(this.cremarkSetValue !== '') {
+          this.nowOrderObj.cremark = this.cremarkSetValue;
+        }
+        if(this.namountSetValue !== '') {
+          this.nowOrderObj.namount = this.namountSetValue;
+        }
+        
+        // 客户名称
+        if(this.customerSetValue !== '') {
+          this.nowOrderObj.customer = this.customerSetValue;
+        }
+        // 客户品名
+        if(this.customerNameSetValue !== '') {
+          this.nowOrderObj.customerName = this.customerNameSetValue;
+        }
+        // 委印单号
+        if(this.orderNumberSetValue !== '') {
+          this.nowOrderObj.orderNumber = this.orderNumberSetValue;
+        }
+        // 客户批号
+        if(this.customerNumberSetValue !== '') {
+          this.nowOrderObj.customerNumber = this.customerNumberSetValue;
+        }
+        // 客户料号
+        if(this.customerMaterialNumberSetValue !== '') {
+          this.nowOrderObj.customerMaterialNumber = this.customerMaterialNumberSetValue;
+        }
+        // 生产批号
+        if(this.ccodeScproductSetValue !== '') {
+          this.nowOrderObj.ccodeScproduct = this.ccodeScproductSetValue;
+        }
+        // 产品编号
+        if(this.ccodeScaproductSetValue !== '') {
+          this.nowOrderObj.ccodeScaproduct = this.ccodeScaproductSetValue;
+        }
+        // 版本号
+        if(this.iversSetValue !== '') {
+          this.nowOrderObj.ivers = this.iversSetValue;
+        }
+        // 应用体重
+        this.nowOrderObj.nweight = this.nowOrderObj.nweight === 0 ? '': this.nowOrderObj.nweight;
+        if(this.nweightSetValue !== '') {
+          this.nowOrderObj.nweight = this.nweightSetValue;
+        }
+        // 生产日期
+        if(this.ddateSetValue !== null) {
+          this.nowOrderObj.dstatuschange = moment(this.ddateSetValue).format('YYYY-MM-DD');
+        }
+        
+        this.createLog(moment().format('YYYY-MM-DD HH:mm:ss') + ' 应用手动设置的订单信息：'+JSON.stringify(this.nowOrderObj));
+        this.showLabelImg(this.nowOrderObj);
       } else {
-        this.nowOrderObj = {}
+        this.nowOrderObj = {};
+        this.$message.warning('请先设置订单信息！');
       }
     },
     openReport(filePath) {
@@ -744,8 +846,8 @@ export default {
     await this.loadData();
     // 查询机台信息
     await this.getMachineTask();
-    // 查询当前打印订单信息
-    this.getPrintInfo();
+    // 应用当前设置的订单信息
+    this.applyOrderInfo();
   },
   mounted() {
     ipcRenderer.on('get-printers', (event, printers) => {

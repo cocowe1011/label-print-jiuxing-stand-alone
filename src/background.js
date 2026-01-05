@@ -40,7 +40,7 @@ app.on('ready', () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 1350,
-    height: 820,
+    height: 870,
     frame: false,
     webPreferences: {
       nodeIntegration: true,
@@ -213,6 +213,21 @@ app.on('ready', () => {
   ipcMain.handle('update-config-file', async (event, arg) => {
     await fs.writeFileSync("D://label_temp_data_single/config/config.json", JSON.stringify(arg))
   })
+  
+  // 读取订单数据文件
+  ipcMain.handle('read-order-data', async (event, arg) => {
+    if(!fs.existsSync("D://label_temp_data_single/config/orderData.json")){
+      fs.writeFile("D://label_temp_data_single/config/orderData.json", JSON.stringify({}), function(err) {});
+      return {};
+    };
+    return await fs.readFileSync("D://label_temp_data_single/config/orderData.json", 'utf8');
+  })
+  
+  // 保存订单数据文件
+  ipcMain.handle('save-order-data', async (event, arg) => {
+    await fs.writeFileSync("D://label_temp_data_single/config/orderData.json", JSON.stringify(arg))
+  })
+  
   // 定义自定义事件
   ipcMain.on('writeLogToLocal', (event, arg) => {
     fs.appendFile("D://label_temp_data_single/log/" + ((new Date()).toLocaleDateString() + ".txt").replaceAll('/','-'), arg + '\n', function(err) {});
