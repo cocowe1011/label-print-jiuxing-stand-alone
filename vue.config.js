@@ -20,7 +20,7 @@ module.exports = defineConfig({
       nodeIntegration: true,
       builderOptions: {
         'productName': 'label-print-jiuxing-stand-alone',//生成exe的名字
-        "appId": "com.wl.ccs",//包名  
+        "appId": "com.wl.labelprint.jiuxing.standalone",//包名  
         "copyright": "wl",//版权信息,
         "nsis": {
           "oneClick": false, // 是否一键安装
