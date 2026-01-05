@@ -5,7 +5,7 @@
         <el-divider content-position="left">机台信息</el-divider>
         <div class="button-content" style="display: flex;align-items: center;">
           <span>配置机台名：<span>{{ machineName === '' ? '请配置本地文件': machineName }}</span></span>
-          <span style="margin-left: 15px;">作业状态：<span :style="{color: machineTask === null ? 'red': 'green'}"><i class="el-icon-loading" v-if="machineTask !== null"></i>{{ machineTask === null ? '未作业': '作业中' }}</span></span>
+          <span style="margin-left: 15px;">作业状态：<span :style="{color: runStatus ? 'green': 'red'}"><i class="el-icon-loading" v-if="runStatus"></i>{{ runStatus ? '作业中': '未作业' }}</span></span>
           <span style="margin-left: 20px;">当前共打印： <span style="color: red">{{ printNum }}</span>份</span>
           <el-button style="margin-left: 15px;" type="primary" size="medium" @click="refresh">刷新</el-button>
           <el-checkbox style="margin-left: 15px;" v-model="djMode" @change="changeDjMode">单机打印</el-checkbox>
@@ -488,7 +488,6 @@ export default {
     async refresh(){
       // 重新应用手动设置的订单信息
       this.labelLoading = true
-      await this.getMachineTask();
       // 应用当前设置的订单信息
       this.applyOrderInfo();
       setTimeout(() => {
@@ -521,8 +520,7 @@ export default {
       const tempObj = JSON.parse(JSON.stringify(this.nowOrderObj));
       tempObj.iindex = '0'
       tempObj.nweight = '0'
-      const machine = this.machineTask ? this.machineTask.machine : this.machineName;
-      tempObj.qrCode = tempObj.qrCode + ',' + tempObj.ccodeScproduct + ',' + tempObj.dstatuschange + ',0,' + machine + ',0Kg'
+      tempObj.qrCode = tempObj.qrCode + ',' + tempObj.ccodeScproduct + ',' + tempObj.dstatuschange + ',0,' + this.machineName + ',0Kg'
       printObj.Master = [tempObj];
       var args = {
         type: "print", //设置不同的属性可以执行不同的任务，如：preview print pdf xls csv txt rtf img grd
@@ -545,8 +543,7 @@ export default {
       const printObj = {"Master":[]};
       this.nowOrderObj.iindex = String(this.nowOrderObj.iindex).padStart(5, '0')
       this.nowOrderObj.nweight = weight
-      const machine = this.machineTask ? this.machineTask.machine : this.machineName;
-      this.nowOrderObj.qrCode = this.nowOrderObj.qrCode + ',' + this.nowOrderObj.ccodeScproduct + ',' + this.nowOrderObj.dstatuschange + ',' + this.nowOrderObj.iindex + ',' + machine + ',' + weight + 'Kg'
+      this.nowOrderObj.qrCode = this.nowOrderObj.qrCode + ',' + this.nowOrderObj.ccodeScproduct + ',' + this.nowOrderObj.dstatuschange + ',' + this.nowOrderObj.iindex + ',' + this.machineName + ',' + weight + 'Kg'
       printObj.Master = [this.nowOrderObj];
       var args = {
         type: "print", //设置不同的属性可以执行不同的任务，如：preview print pdf xls csv txt rtf img grd
@@ -592,7 +589,7 @@ export default {
       grwebapp.webapp_ws_ajax_run(args);
     },
     runPrint() {
-      if(this.machineTask === null) {
+      if(this.machineName === '' || this.machineName === null) {
         this.$message.error('请选择机台！')
         return false;
       }
@@ -630,18 +627,6 @@ export default {
         // 重新应用订单信息
         this.applyOrderInfo();
       }).catch(() => {});
-    },
-    async getMachineTask() {
-      this.machineTask = null
-      if(this.machineName != '') {
-        await HttpUtil.post('/order/getMachineTask', {"machine": this.machineName}).then((res)=> {
-          if(res.data&&res.data.length > 0) {
-            this.machineTask = res.data[0]
-          }
-        }).catch((err)=> {
-          this.$message.error('查询机台任务出错！请刷新重试！');
-        });
-      }
     },
     async loadData() {
       try {
@@ -681,12 +666,12 @@ export default {
         this.nowOrderObj = JSON.parse(JSON.stringify(this.orderSetData));
         
         // 应用其他设置的参数
-        this.nowOrderObj.machine = this.machineTask ? this.machineTask.machine : this.machineName;
+        this.nowOrderObj.machine = this.machineName;
         this.nowOrderObj.inspection = this.inspectionSetValue;
         
         // 生成二维码
-        const machineCode = this.machineTask && this.machineTask.machine === 'M-4#CZHJ20230630' ? '03' : 
-                           (this.machineTask && this.machineTask.machine === 'M-5#ZHJ' ? '02' : '01');
+        const machineCode = this.machineName === 'M-4#CZHJ20230630' ? '03' : 
+                           (this.machineName === 'M-5#ZHJ' ? '02' : '01');
         this.nowOrderObj.qrCode = machineCode + ',' + this.nowOrderObj.length + 'x' + this.nowOrderObj.width + 'x' + this.nowOrderObj.height;
         
         // 应用标签设置的参数
@@ -844,8 +829,6 @@ export default {
     });
     // 加载机台和打印机配置
     await this.loadData();
-    // 查询机台信息
-    await this.getMachineTask();
     // 应用当前设置的订单信息
     this.applyOrderInfo();
   },
