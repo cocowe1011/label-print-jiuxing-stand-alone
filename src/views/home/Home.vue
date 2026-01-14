@@ -107,6 +107,7 @@
             <el-descriptions-item label="外箱宽度">{{ nowOrderObj.width === undefined ? '未查询到可打印信息': nowOrderObj.width }}</el-descriptions-item>
             <el-descriptions-item label="外箱高度">{{ nowOrderObj.height === undefined ? '未查询到可打印信息': nowOrderObj.height }}</el-descriptions-item>
             <el-descriptions-item label="每箱包装数量">{{ nowOrderObj.namount === undefined ? '未查询到可打印信息': nowOrderObj.namount }}</el-descriptions-item>
+            <el-descriptions-item label="箱数量单位">{{ nowOrderObj.camountunit === undefined ? '未查询到可打印信息': nowOrderObj.camountunit }}</el-descriptions-item>
             <el-descriptions-item label="箱序号">{{ nowOrderObj.iindex === undefined ? '未查询到可打印信息': nowOrderObj.iindex }}</el-descriptions-item>
             <el-descriptions-item label="生产日期">{{ nowOrderObj.dstatuschange === undefined ? '未查询到可打印信息': nowOrderObj.dstatuschange }}</el-descriptions-item>
           </el-descriptions>
@@ -173,6 +174,10 @@
         <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
           <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">每箱包装数量：</div>
           <el-input v-model="orderSetData.namount" placeholder="请输入内容" style="width: 240px;margin-left: 8px;" type="number"></el-input>
+        </div>
+        <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
+          <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">箱数量单位：</div>
+          <el-input v-model="orderSetData.camountunit" placeholder="请输入内容" style="width: 240px;margin-left: 8px;"></el-input>
         </div>
         <div style="height: 50px;width: 50%;display: flex;align-items: center;padding: 5px 0;float: left;">
           <div style="font-size: 14px;width:120px;height:20px;display: flex;justify-content:flex-end;">生产日期：</div>
